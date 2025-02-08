@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Tab Recorder</title>
+  <style>
+    body {
+      width: 780px;
+      padding: 10px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    h1 {
+      margin: 0;
+      padding: 10px 0;
+      color: #1a73e8;
+    }
+    .buttons {
+      display: flex;
+      gap: 10px;
+    }
+    .settings {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+    .setting-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .setting-group label {
+      font-weight: 500;
+      color: #202124;
+    }
+    select, input {
+      padding: 8px;
+      border: 1px solid #dadce0;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      background: #1a73e8;
+      color: white;
+      transition: background 0.2s;
+    }
+    .btn:hover {
+      background: #1557b0;
+    }
+    .btn:disabled {
+      background: #dadce0;
+      cursor: not-allowed;
+    }
+    .btn-stop {
+      background: #ea4335;
+    }
+    .btn-stop:hover {
+      background: #d93025;
+    }
+    .status {
+      padding: 10px;
+      color: #1a73e8;
+      font-weight: 500;
+    }
+    .note {
+      font-size: 12px;
+      color: #5f6368;
+      margin-top: 4px;
+    }
+    .converter-links {
+      display: none;
+      margin-top: 10px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+    .converter-links h3 {
+      margin: 0 0 10px 0;
+      color: #202124;
+    }
+    .converter-links ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+    .converter-links li {
+      margin: 5px 0;
+    }
+    .converter-links a {
+      color: #1a73e8;
+      text-decoration: none;
+    }
+    .converter-links a:hover {
+      text-decoration: underline;
+    }
+    #progress {
+      width: 100%;
+      height: 4px;
+      background: #e8eaed;
+      border-radius: 2px;
+      margin-top: 10px;
+      display: none;
+    }
+    #progress-bar {
+      width: 0%;
+      height: 100%;
+      background: #1a73e8;
+      border-radius: 2px;
+      transition: width 0.3s;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Tab Recorder</h1>
+    
+    <div class="settings">
+      <div class="setting-group">
+        <label for="resolution">Çözünürlük</label>
+        <select id="resolution">
+          <option value="3840x2160">4K (3840x2160)</option>
+          <option value="2560x1440">2K (2560x1440)</option>
+          <option value="1920x1080" selected>Full HD (1920x1080)</option>
+          <option value="1280x720">HD (1280x720)</option>
+          <option value="854x480">SD (854x480)</option>
+        </select>
+      </div>
+
+      <div class="setting-group">
+        <label for="framerate">FPS</label>
+        <select id="framerate">
+          <option value="60">60 FPS</option>
+          <option value="30" selected>30 FPS</option>
+          <option value="24">24 FPS</option>
+          <option value="15">15 FPS</option>
+        </select>
+      </div>
+
+      <div class="setting-group">
+        <label for="videoBitrate">Video Kalitesi</label>
+        <select id="videoBitrate">
+          <option value="8000000">Çok Yüksek (8 Mbps)</option>
+          <option value="5000000">Yüksek (5 Mbps)</option>
+          <option value="2500000" selected>Orta (2.5 Mbps)</option>
+          <option value="1000000">Düşük (1 Mbps)</option>
+        </select>
+      </div>
+
+      <div class="setting-group">
+        <label for="format">Format</label>
+        <select id="format">
+          <option value="mp4" selected>MP4 (Tüm Cihazlar)</option>
+          <option value="webm">WebM (Chrome, Firefox)</option>
+        </select>
+        <div id="progress">
+          <div id="progress-bar"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="buttons">
+      <button id="startFullscreen" class="btn">Tam Ekran Kayıt</button>
+      <button id="startRegion" class="btn">Bölge Seç ve Kaydet</button>
+    </div>
+
+    <div id="status" class="status"></div>
+
+    <div id="converterLinks" class="converter-links">
+      <h3>MP4'e Dönüştürme Servisleri</h3>
+      <ul>
+        <li><a href="https://cloudconvert.com/webm-to-mp4" target="_blank">CloudConvert</a> - Hızlı ve güvenilir</li>
+        <li><a href="https://convertio.co/webm-mp4" target="_blank">Convertio</a> - Kolay kullanım</li>
+        <li><a href="https://www.onlineconverter.com/webm-to-mp4" target="_blank">OnlineConverter</a> - Ücretsiz</li>
+      </ul>
+    </div>
+    <div id="converterLinks">
+      Not: MP4 formatı seçildiğinde video WebM olarak kaydedilir. Dönüştürmek için:<br>
+      <a href="https://cloudconvert.com/webm-to-mp4" target="_blank">→ CloudConvert ile dönüştür</a><br>
+      <a href="https://convertio.co/webm-mp4/" target="_blank">→ Convertio ile dönüştür</a><br><br>
+      <strong>FFmpeg ile dönüştürmek için:</strong><br>
+      <code>ffmpeg -i dosya.webm -c:v libx264 -crf 23 output.mp4</code><br>
+      <small>Not: FFmpeg'i <a href="https://ffmpeg.org/download.html" target="_blank">buradan</a> indirebilirsiniz.</small>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
