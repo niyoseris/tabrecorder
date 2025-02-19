@@ -159,6 +159,19 @@
       </div>
 
       <div class="setting-group">
+        <label for="audio">Ses Kaynağı</label>
+        <select id="audio">
+          <option value="none">Ses Yok</option>
+          <option value="microphone">Sadece Mikrofon</option>
+          <option value="both">Mikrofon + Sistem Sesi</option>
+        </select>
+        <div class="note">
+          - Mikrofon: Sadece sizin sesiniz kaydedilir<br>
+          - Mikrofon + Sistem Sesi: Hem sizin sesiniz hem de bilgisayarın sesi kaydedilir
+        </div>
+      </div>
+
+      <div class="setting-group">
         <label for="format">Format</label>
         <select id="format">
           <option value="mp4" selected>MP4 (Tüm Cihazlar)</option>
