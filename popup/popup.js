@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   const framerateSelect = document.getElementById('framerate');
   const videoBitrateSelect = document.getElementById('videoBitrate');
   const formatSelect = document.getElementById('format');
+  const audioSelect = document.getElementById('audio');
 
   // Başlangıçta kayıt durumunu kontrol et
   chrome.runtime.sendMessage({ action: 'getRecordingStatus' }, (response) => {
@@ -46,6 +47,7 @@ document.addEventListener('DOMContentLoaded', async function() {
       const frameRate = Number(framerateSelect.value);
       const videoBitrate = Number(videoBitrateSelect.value);
       const format = formatSelect.value;
+      const audio = audioSelect.value;
 
       const settings = {
         type,
@@ -53,13 +55,35 @@ document.addEventListener('DOMContentLoaded', async function() {
         height,
         frameRate,
         videoBitrate,
-        format
+        format,
+        audio
       };
 
       console.log('[DEBUG] Popup: Seçilen ayarlar:', settings);
 
+      // Önce mikrofon izni al (eğer seçildiyse)
+      let micStream = null;
+      if (settings.audio === 'microphone' || settings.audio === 'both') {
+        try {
+          statusDiv.textContent = "Mikrofon izni bekleniyor...";
+          micStream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true,
+              sampleRate: 44100
+            },
+            video: false
+          });
+          statusDiv.textContent = "Ekran paylaşımı izni bekleniyor...";
+        } catch (error) {
+          console.error('Mikrofon izni alınamadı:', error);
+          statusDiv.textContent = "Mikrofon izni reddedildi!";
+          throw new Error('Mikrofon izni reddedildi');
+        }
+      }
+
       // Ekran paylaşımı izni al
-      const stream = await navigator.mediaDevices.getDisplayMedia({
+      const displayMediaOptions = {
         video: {
           cursor: "always",
           displaySurface: type === 'screen' ? 'monitor' : 'window',
@@ -69,19 +93,40 @@ document.addEventListener('DOMContentLoaded', async function() {
           aspectRatio: width / height,
           resizeMode: "crop-and-scale"
         },
-        audio: false,
-        preferCurrentTab: false,
+        audio: settings.audio === 'both', // Sistem sesi için
         selfBrowserSurface: "exclude",
-        systemAudio: "exclude",
         surfaceSwitching: "include",
         monitorTypeSurfaces: "include",
         controllerType: "browser"
-      });
+      };
+
+      const stream = await navigator.mediaDevices.getDisplayMedia(displayMediaOptions);
+
+      // Mikrofon sesini ana stream'e ekle
+      if (micStream) {
+        const audioContext = new AudioContext();
+        const destination = audioContext.createMediaStreamDestination();
+        
+        // Mikrofon sesini ekle
+        const micSource = audioContext.createMediaStreamSource(micStream);
+        micSource.connect(destination);
+        
+        // Sistem sesini ekle (eğer varsa)
+        if (settings.audio === 'both') {
+          const systemSource = audioContext.createMediaStreamSource(stream);
+          systemSource.connect(destination);
+        }
+        
+        // Ses track'lerini stream'e ekle
+        destination.stream.getAudioTracks().forEach(track => {
+          stream.addTrack(track);
+        });
+      }
 
       console.log('[DEBUG] Popup: Stream alındı');
 
       // WebM olarak kaydet
-      const mimeType = 'video/webm;codecs=vp8';
+      const mimeType = 'video/webm;codecs=vp8,opus';
 
       console.log('[DEBUG] Popup: MediaRecorder oluşturuluyor');
       mediaRecorder = new MediaRecorder(stream, {
@@ -189,5 +234,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     framerateSelect.disabled = isRecording;
     videoBitrateSelect.disabled = isRecording;
     formatSelect.disabled = isRecording;
+    audioSelect.disabled = isRecording;
   }
 });
