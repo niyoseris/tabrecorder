@@ -1,10 +1,10 @@
-// Content script şu an için boş, gelecekte gerekirse eklemeler yapılabilir
-console.log('Tab Recorder content script yüklendi');
+// Content script is currently empty, additions can be made in the future if needed
+console.log('Tab Recorder content script loaded');
 
 let mediaRecorder = null;
 let recordedChunks = [];
 
-// Background script'ten gelen mesajları dinle
+// Listen for messages from background script
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
   if (request.action === "startRecording") {
     try {
@@ -29,18 +29,18 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
       
       mediaRecorder.ondataavailable = (e) => {
         if (e.data.size > 0) {
-          console.log('Veri alındı:', e.data.size, 'bytes');
+          console.log('Data received:', e.data.size, 'bytes');
           recordedChunks.push(e.data);
         }
       };
 
       mediaRecorder.onstart = () => {
-        console.log('Kayıt başladı');
+        console.log('Recording started');
         chrome.runtime.sendMessage({ action: "recordingStarted" });
       };
 
       mediaRecorder.onstop = () => {
-        console.log('Kayıt durdu');
+        console.log('Recording stopped');
         
         const blob = new Blob(recordedChunks, { type: mimeType });
         const url = URL.createObjectURL(blob);
@@ -59,7 +59,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
       };
 
       mediaRecorder.onerror = (error) => {
-        console.error('MediaRecorder hatası:', error);
+        console.error('MediaRecorder error:', error);
         chrome.runtime.sendMessage({ 
           action: "recordingError", 
           error: error.message 
@@ -70,7 +70,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
       sendResponse({ success: true });
 
     } catch (error) {
-      console.error('Kayıt başlatma hatası:', error);
+      console.error('Recording start error:', error);
       sendResponse({ error: error.message });
     }
     return true;
@@ -81,7 +81,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
       mediaRecorder.stop();
       sendResponse({ success: true });
     } else {
-      sendResponse({ error: "Aktif kayıt bulunamadı" });
+      sendResponse({ error: "No active recording found" });
     }
     return true;
   }

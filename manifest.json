@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Tab Recorder",
   "version": "1.0",
-  "description": "Chrome sekmesi video kaydedici",
+  "description": "Chrome tab video recorder",
   "permissions": [
     "tabs",
     "activeTab",

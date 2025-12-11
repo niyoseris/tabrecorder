@@ -1,17 +1,17 @@
-// Eklenti yüklendiğinde
+// When extension is installed
 chrome.runtime.onInstalled.addListener(() => {
-  console.log('[DEBUG] Tab Recorder eklentisi yüklendi');
+  console.log('[DEBUG] Tab Recorder extension installed');
 });
 
-// İkona tıklandığında
+// When icon is clicked
 chrome.action.onClicked.addListener(() => {
-  // Eğer pencere zaten açıksa, onu öne getir
+  // If window is already open, bring it to front
   if (windowId !== null) {
     chrome.windows.update(windowId, { focused: true });
     return;
   }
 
-  // Yeni pencere aç
+  // Open new window
   chrome.windows.create({
     url: chrome.runtime.getURL('popup/popup.html'),
     type: 'popup',
@@ -22,7 +22,7 @@ chrome.action.onClicked.addListener(() => {
   });
 });
 
-// Pencere kapandığında
+// When window is closed
 chrome.windows.onRemoved.addListener((removedWindowId) => {
   if (removedWindowId === windowId) {
     windowId = null;
@@ -34,7 +34,7 @@ let recordingSettings = null;
 let windowId = null;
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  console.log('[DEBUG] Background: Mesaj alındı:', request);
+  console.log('[DEBUG] Background: Message received:', request);
 
   if (request.action === 'updateRecordingStatus') {
     isRecording = request.isRecording;

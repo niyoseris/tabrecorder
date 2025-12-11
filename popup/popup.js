@@ -1,48 +1,48 @@
-// Kayıt durumunu global olarak tut
+// Keep recording state globally
 let mediaRecorder = null;
 let recordedChunks = [];
 
 document.addEventListener('DOMContentLoaded', async function() {
-  console.log('[DEBUG] Popup: DOMContentLoaded event tetiklendi');
+  console.log('[DEBUG] Popup: DOMContentLoaded event triggered');
 
   const startFullscreenBtn = document.getElementById('startFullscreen');
   const startRegionBtn = document.getElementById('startRegion');
   const statusDiv = document.getElementById('status');
   const converterLinksDiv = document.getElementById('converterLinks');
 
-  // Ayarlar
+  // Settings
   const resolutionSelect = document.getElementById('resolution');
   const framerateSelect = document.getElementById('framerate');
   const videoBitrateSelect = document.getElementById('videoBitrate');
   const formatSelect = document.getElementById('format');
   const audioSelect = document.getElementById('audio');
 
-  // Başlangıçta kayıt durumunu kontrol et
+  // Check recording status on startup
   chrome.runtime.sendMessage({ action: 'getRecordingStatus' }, (response) => {
-    console.log('[DEBUG] Popup: Kayıt durumu alındı:', response);
+    console.log('[DEBUG] Popup: Recording status received:', response);
     if (response.isRecording) {
       updateUI(true);
-      statusDiv.textContent = "Kayıt yapılıyor...";
+      statusDiv.textContent = "Recording...";
     }
   });
 
   startFullscreenBtn.addEventListener('click', () => {
-    console.log('[DEBUG] Popup: Tam ekran kayıt butonu tıklandı');
+    console.log('[DEBUG] Popup: Full screen record button clicked');
     startRecording('screen');
   });
   
   startRegionBtn.addEventListener('click', () => {
-    console.log('[DEBUG] Popup: Bölge kayıt butonu tıklandı');
+    console.log('[DEBUG] Popup: Region record button clicked');
     startRecording('region');
   });
 
   async function startRecording(type) {
     try {
-      console.log('[DEBUG] Popup: startRecording başladı, type:', type);
-      statusDiv.textContent = "İzin penceresi açılıyor...";
+      console.log('[DEBUG] Popup: startRecording started, type:', type);
+      statusDiv.textContent = "Opening permission window...";
       converterLinksDiv.style.display = 'none';
 
-      // Seçilen ayarları al
+      // Get selected settings
       const [width, height] = resolutionSelect.value.split('x').map(Number);
       const frameRate = Number(framerateSelect.value);
       const videoBitrate = Number(videoBitrateSelect.value);
@@ -59,13 +59,13 @@ document.addEventListener('DOMContentLoaded', async function() {
         audio
       };
 
-      console.log('[DEBUG] Popup: Seçilen ayarlar:', settings);
+      console.log('[DEBUG] Popup: Selected settings:', settings);
 
-      // Önce mikrofon izni al (eğer seçildiyse)
+      // Get microphone permission first (if selected)
       let micStream = null;
       if (settings.audio === 'microphone' || settings.audio === 'both') {
         try {
-          statusDiv.textContent = "Mikrofon izni bekleniyor...";
+          statusDiv.textContent = "Waiting for microphone permission...";
           micStream = await navigator.mediaDevices.getUserMedia({
             audio: {
               echoCancellation: true,
@@ -74,15 +74,15 @@ document.addEventListener('DOMContentLoaded', async function() {
             },
             video: false
           });
-          statusDiv.textContent = "Ekran paylaşımı izni bekleniyor...";
+          statusDiv.textContent = "Waiting for screen sharing permission...";
         } catch (error) {
-          console.error('Mikrofon izni alınamadı:', error);
-          statusDiv.textContent = "Mikrofon izni reddedildi!";
-          throw new Error('Mikrofon izni reddedildi');
+          console.error('Microphone permission denied:', error);
+          statusDiv.textContent = "Microphone permission denied!";
+          throw new Error('Microphone permission denied');
         }
       }
 
-      // Ekran paylaşımı izni al
+      // Get screen sharing permission
       const displayMediaOptions = {
         video: {
           cursor: "always",
@@ -102,134 +102,134 @@ document.addEventListener('DOMContentLoaded', async function() {
 
       const stream = await navigator.mediaDevices.getDisplayMedia(displayMediaOptions);
 
-      // Mikrofon sesini ana stream'e ekle
+      // Add microphone audio to main stream
       if (micStream) {
         const audioContext = new AudioContext();
         const destination = audioContext.createMediaStreamDestination();
         
-        // Mikrofon sesini ekle
+        // Add microphone audio
         const micSource = audioContext.createMediaStreamSource(micStream);
         micSource.connect(destination);
         
-        // Sistem sesini ekle (eğer varsa)
+        // Add system audio (if available)
         if (settings.audio === 'both') {
           const systemSource = audioContext.createMediaStreamSource(stream);
           systemSource.connect(destination);
         }
         
-        // Ses track'lerini stream'e ekle
+        // Add audio tracks to stream
         destination.stream.getAudioTracks().forEach(track => {
           stream.addTrack(track);
         });
       }
 
-      console.log('[DEBUG] Popup: Stream alındı');
+      console.log('[DEBUG] Popup: Stream received');
 
-      // WebM olarak kaydet
+      // Save as WebM
       const mimeType = 'video/webm;codecs=vp8,opus';
 
-      console.log('[DEBUG] Popup: MediaRecorder oluşturuluyor');
+      console.log('[DEBUG] Popup: Creating MediaRecorder');
       mediaRecorder = new MediaRecorder(stream, {
         mimeType: mimeType,
         videoBitsPerSecond: videoBitrate
       });
-      console.log('[DEBUG] Popup: MediaRecorder oluşturuldu:', mediaRecorder);
+      console.log('[DEBUG] Popup: MediaRecorder created:', mediaRecorder);
 
       recordedChunks = [];
       
       mediaRecorder.ondataavailable = (e) => {
-        console.log('[DEBUG] Popup: Veri alındı, boyut:', e.data.size);
+        console.log('[DEBUG] Popup: Data received, size:', e.data.size);
         if (e.data.size > 0) {
           recordedChunks.push(e.data);
         }
       };
 
       mediaRecorder.onstart = () => {
-        console.log('[DEBUG] Popup: MediaRecorder kayda başladı');
-        // Background script'e kayıt durumunu bildir
+        console.log('[DEBUG] Popup: MediaRecorder started recording');
+        // Notify background script of recording status
         chrome.runtime.sendMessage({ 
           action: 'updateRecordingStatus',
           isRecording: true,
           settings
         });
         updateUI(true);
-        statusDiv.textContent = "Kayıt yapılıyor...";
-        // Ekran seçimi yapıldıktan sonra pencereyi arka plana al
+        statusDiv.textContent = "Recording...";
+        // Minimize window after screen selection
         window.blur();
       };
 
       mediaRecorder.onstop = async () => {
-        console.log('[DEBUG] Popup: MediaRecorder durdu');
-        // Background script'e kayıt durumunu bildir
+        console.log('[DEBUG] Popup: MediaRecorder stopped');
+        // Notify background script of recording status
         chrome.runtime.sendMessage({ 
           action: 'updateRecordingStatus',
           isRecording: false,
           settings: null
         });
         const blob = new Blob(recordedChunks, { type: mimeType });
-        console.log('[DEBUG] Popup: WebM blob oluşturuldu, boyut:', blob.size);
+        console.log('[DEBUG] Popup: WebM blob created, size:', blob.size);
         saveRecording(blob, 'webm');
       };
 
       mediaRecorder.onerror = (error) => {
-        console.error('[DEBUG] Popup: MediaRecorder hatası:', error);
-        statusDiv.textContent = "Kayıt hatası: " + error.message;
+        console.error('[DEBUG] Popup: MediaRecorder error:', error);
+        statusDiv.textContent = "Recording error: " + error.message;
       };
 
       mediaRecorder.start(1000);
-      console.log('[DEBUG] Popup: MediaRecorder başlatıldı');
+      console.log('[DEBUG] Popup: MediaRecorder started');
 
-      // Kayıt durdurulduğunda (Stop Share butonuna tıklandığında)
+      // When recording is stopped (Stop Share button clicked)
       stream.getVideoTracks()[0].onended = () => {
-        console.log('[DEBUG] Popup: Video track sonlandı');
+        console.log('[DEBUG] Popup: Video track ended');
         if (mediaRecorder && mediaRecorder.state !== "inactive") {
           mediaRecorder.stop();
-          console.log('[DEBUG] Popup: MediaRecorder durduruldu');
+          console.log('[DEBUG] Popup: MediaRecorder stopped');
         }
       };
 
     } catch (err) {
-      console.error('[DEBUG] Popup: Hata oluştu:', err);
-      statusDiv.textContent = "Kayıt başlatılamadı: " + err.message;
+      console.error('[DEBUG] Popup: Error occurred:', err);
+      statusDiv.textContent = "Failed to start recording: " + err.message;
       updateUI(false);
     }
   }
 
   function saveRecording(blob, format) {
-    console.log(`[DEBUG] Popup: ${format.toUpperCase()} kaydediliyor, boyut:`, blob.size);
+    console.log(`[DEBUG] Popup: Saving ${format.toUpperCase()}, size:`, blob.size);
     
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const [width, height] = resolutionSelect.value.split('x');
     
-    console.log('[DEBUG] Popup: Video indiriliyor');
+    console.log('[DEBUG] Popup: Downloading video');
     chrome.downloads.download({
       url: URL.createObjectURL(blob),
       filename: `tab-recording-${width}x${height}-${timestamp}.${format}`,
       saveAs: true
     }, (downloadId) => {
-      console.log('[DEBUG] Popup: Video indirildi, downloadId:', downloadId);
+      console.log('[DEBUG] Popup: Video downloaded, downloadId:', downloadId);
       recordedChunks = [];
       mediaRecorder.stream.getTracks().forEach(track => {
         track.stop();
-        console.log('[DEBUG] Popup: Track durduruldu:', track.kind);
+        console.log('[DEBUG] Popup: Track stopped:', track.kind);
       });
       updateUI(false);
       if (formatSelect.value === 'mp4') {
-        statusDiv.textContent = "Video WebM formatında kaydedildi!";
+        statusDiv.textContent = "Video saved in WebM format!";
         converterLinksDiv.style.display = 'block';
       } else {
-        statusDiv.textContent = "Video kaydedildi!";
+        statusDiv.textContent = "Video saved!";
         converterLinksDiv.style.display = 'none';
       }
     });
   }
 
   function updateUI(isRecording) {
-    console.log('[DEBUG] Popup: UI güncelleniyor, isRecording:', isRecording);
+    console.log('[DEBUG] Popup: Updating UI, isRecording:', isRecording);
     startFullscreenBtn.disabled = isRecording;
     startRegionBtn.disabled = isRecording;
     
-    // Kayıt sırasında ayarları devre dışı bırak
+    // Disable settings during recording
     resolutionSelect.disabled = isRecording;
     framerateSelect.disabled = isRecording;
     videoBitrateSelect.disabled = isRecording;

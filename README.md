@@ -1,52 +1,52 @@
 # Tab Recorder Chrome Extension
 
-Chrome sekmesi video kaydedici eklentisi. Ekranınızı veya belirli bir bölgeyi WebM formatında kaydedebilir, daha sonra MP4'e dönüştürebilirsiniz.
+Chrome tab video recorder extension. Record your screen or a specific region in WebM format, then convert to MP4.
 
-## Özellikler
+## Features
 
-- Tam ekran veya bölge kaydı
-- Özelleştirilebilir çözünürlük (1920x1080, 1280x720, 854x480)
-- Özelleştirilebilir FPS (60, 30, 24)
-- Özelleştirilebilir video kalitesi (Yüksek, Orta, Düşük)
-- WebM formatında kayıt
-- MP4'e dönüştürme seçenekleri (Online servisler veya FFmpeg)
+- Full screen or region recording
+- Customizable resolution (1920x1080, 1280x720, 854x480)
+- Customizable FPS (60, 30, 24)
+- Customizable video quality (High, Medium, Low)
+- WebM format recording
+- MP4 conversion options (Online services or FFmpeg)
 
-## Kurulum
+## Installation
 
-1. Bu repoyu klonlayın:
+1. Clone this repository:
 ```bash
 git clone https://github.com/niyoseris/tabrecorder.git
 ```
 
-2. Chrome'da uzantılar sayfasını açın: `chrome://extensions`
-3. Geliştirici modunu açın (sağ üst köşe)
-4. "Paketlenmemiş öğe yükle" butonuna tıklayın
-5. İndirdiğiniz klasörü seçin
+2. Open Chrome extensions page: `chrome://extensions`
+3. Enable Developer mode (top right corner)
+4. Click "Load unpacked" button
+5. Select the downloaded folder
 
-## Kullanım
+## Usage
 
-1. Eklenti ikonuna tıklayın
-2. Kayıt ayarlarını seçin:
-   - Çözünürlük
+1. Click the extension icon
+2. Select recording settings:
+   - Resolution
    - FPS
-   - Video kalitesi
+   - Video quality
    - Format (WebM/MP4)
-3. "Tam Ekran Kaydet" veya "Bölge Seç ve Kaydet" butonuna tıklayın
-4. Kaydı durdurmak için Chrome'un sağ üst köşesindeki kırmızı "Stop Share" butonuna tıklayın
+3. Click "Full Screen Record" or "Select Region and Record" button
+4. To stop recording, click the red "Stop Share" button in Chrome's top right corner
 
-## WebM'den MP4'e Dönüştürme
+## Converting WebM to MP4
 
-### Online Servisler
+### Online Services
 - [CloudConvert](https://cloudconvert.com/webm-to-mp4)
 - [Convertio](https://convertio.co/webm-mp4/)
 
-### FFmpeg ile Dönüştürme
-1. [FFmpeg'i yükleyin](https://ffmpeg.org/download.html) (macOS: `brew install ffmpeg`)
-2. Terminal'de şu komutu çalıştırın:
+### Converting with FFmpeg
+1. [Install FFmpeg](https://ffmpeg.org/download.html) (macOS: `brew install ffmpeg`)
+2. Run the following command in Terminal:
 ```bash
-ffmpeg -i dosya.webm -c:v libx264 -crf 23 output.mp4
+ffmpeg -i file.webm -c:v libx264 -crf 23 output.mp4
 ```
 
-## Lisans
+## License
 
-MIT License - Detaylar için [LICENSE](LICENSE) dosyasına bakın.
+MIT License - See [LICENSE](LICENSE) file for details.
